@@ -2,43 +2,42 @@ package autoClick;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
+import javafx.beans.property.Property;
+import javafx.beans.value.ObservableValue;
+import javafx.geometry.*;
+import javafx.scene.*;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.text.Font;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
+import javafx.scene.layout.*;
+import javafx.scene.text.*;
+import javafx.stage.*;
 import javafx.scene.web.HTMLEditor;
+import javafx.util.converter.NumberStringConverter;
 
 public class App extends Application {
 
+    public static final Stage mainStage = new Stage();
     public static final Pane mainPane = new Pane();
     public static final Scene mainScene = new Scene(mainPane);
     public static final Label MOUSE_X_LB = new Label("X:");
     public static final Label MOUSE_Y_LB = new Label("Y:");
     public static final Label EMAIL_LB = new Label("Email format:");
-    public static final Label TOTAL_COUNT_LB = new Label("Total count:");
+    public static final Label TOTAL_COUNT_LB = new Label("Total email:");
     public static final Label COUNTER_LB = new Label("Counter:");
-    public static final Label START_RECORD_LB = new Label("Start Record: Ctrl + F1");
-    public static final Label STOP_RECORD_LB = new Label("Stop Record: Ctrl + F2");
-    public static final Label START_OPERATION_LB = new Label("Start Operation: Ctrl + F12");
+    public static final Label OVERALL_WAIT_LB = new Label("Overall wait:");
     public static final Label STOP_OPERATION_LB = new Label("Stop Operation: Pause Break");
     public static final Label CLIPBOARD_0 = new Label("Clipboard 0:");
     public static final Label CLIPBOARD_1 = new Label("Clipboard 1:");
     public static final Label CLIPBOARD_2 = new Label("Clipboard 2:");
 
+    public static final CheckBox EMAIL_CB = new CheckBox("Email");
+    public static final CheckBox ON_TOP_CB = new CheckBox("On top");
     public static final Button BROWSE_BT = new Button("Browse");
-    public static final Button RECORD_BT = new Button("Record");
+    public static final Button MOVE_UP_BT = new Button("\u25B2");
+    public static final Button MOVE_DOWN_BT = new Button("\u25BC");
+    public static final Button ADD_BT = new Button("+");
+    public static final Button DELETE_BT = new Button("-");
+    public static final Button RESET_BT = new Button("Reset");
     public static final Button GO_BT = new Button("GO");
 
     public static final Font DEFAULT_FONT = Font.font("Segoe UI", 14);
@@ -46,30 +45,40 @@ public class App extends Application {
     public static Label mousePosX_LB = new Label("0");
     public static Label mousePosY_LB = new Label("0");
     public static Label emailExample_LB = new Label("thomas@");
-    public static Label totalCount_LB = new Label("0");
+    public static Spinner<Integer> totalCount_SP = new Spinner<>();
     public static Label counter_LB = new Label("0");
+    public static Spinner<Integer> overallWait_SP = new Spinner<>();
     public static TextField srcDir_TF = new TextField("C:/");
-    public static TextField emailSuffix_TF = new TextField("siswa.um.edu.my");
+    public static TextField emailSuffix_TF = new TextField("siswa365.um.edu.my");
     public static HTMLEditor HTMLEditor_0 = new HTMLEditor();
     public static HTMLEditor HTMLEditor_1 = new HTMLEditor();
     public static HTMLEditor HTMLEditor_2 = new HTMLEditor();
+
+    public static SpinnerValueFactory.IntegerSpinnerValueFactory totalEmailValFac
+                                                                 = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000,
+                                                                                                                      Bot.maxEmail.get(), 1);
+    public static SpinnerValueFactory.IntegerSpinnerValueFactory totalRepeatValFac
+                                                                 = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000,
+                                                                                                                      Bot.totalRepeat.get(), 1);
 
     @Override
     public void start(Stage stage) throws Exception {
 
         customizePane();
         setButtonAction();
-        Bot.startCollectMousePointThread();
+        Bot.startBotThread();
+        Bot.configureFileChooser();
 
-        stage.initStyle(StageStyle.TRANSPARENT);
-        stage.setResizable(false);
-        stage.setWidth(640);
-        stage.setHeight(480);
-        stage.setTitle("Auto Click");
-        stage.setScene(mainScene);
-        stage.show();
+        mainStage.initStyle(StageStyle.TRANSPARENT);
+        mainStage.setResizable(false);
+        mainStage.setWidth(640);
+        mainStage.setHeight(480);
+        mainStage.setTitle("Auto Click");
+        mainStage.setScene(mainScene);
+        mainStage.setAlwaysOnTop(true);
+        mainStage.show();
 
-        stage.setOnCloseRequest((WindowEvent t) -> {
+        mainStage.setOnCloseRequest((WindowEvent t) -> {
             Bot.destroy();
             Platform.exit();
             System.exit(0);
@@ -77,8 +86,8 @@ public class App extends Application {
 
         mainPane.setOnMousePressed(pressEvent -> {
             mainPane.setOnMouseDragged(dragEvent -> {
-                stage.setX(dragEvent.getScreenX() - pressEvent.getSceneX());
-                stage.setY(dragEvent.getScreenY() - pressEvent.getSceneY());
+                mainStage.setX(dragEvent.getScreenX() - pressEvent.getSceneX());
+                mainStage.setY(dragEvent.getScreenY() - pressEvent.getSceneY());
             });
         });
     }
@@ -97,6 +106,16 @@ public class App extends Application {
         mousePosY_LB.setFont(DEFAULT_FONT);
         mousePosY_LB.setAlignment(Pos.CENTER_RIGHT);
         customizeElement(mousePosY_LB, 40, 20, 120, 10);
+
+        EMAIL_CB.setFont(DEFAULT_FONT);
+        EMAIL_CB.setAllowIndeterminate(false);
+        EMAIL_CB.setSelected(true);
+        customizeElement(EMAIL_CB, 80, 20, 220, 10);
+
+        ON_TOP_CB.setFont(DEFAULT_FONT);
+        ON_TOP_CB.setAllowIndeterminate(false);
+        ON_TOP_CB.setSelected(true);
+        customizeElement(ON_TOP_CB, 80, 20, 300, 10);
 
         srcDir_TF.setFont(DEFAULT_FONT);
         srcDir_TF.setPadding(Insets.EMPTY);
@@ -121,36 +140,70 @@ public class App extends Application {
         TOTAL_COUNT_LB.setFont(DEFAULT_FONT);
         customizeElement(TOTAL_COUNT_LB, 100, 20, 20, 100);
 
-        totalCount_LB.setFont(DEFAULT_FONT);
-        totalCount_LB.setAlignment(Pos.CENTER_RIGHT);
-        customizeElement(totalCount_LB, 40, 20, 120, 100);
+        totalEmailValFac.valueProperty().bindBidirectional(Bot.totalEmail);
+        totalEmailValFac.maxProperty().bindBidirectional(Bot.maxEmail);
+        totalRepeatValFac.valueProperty().bindBidirectional(Bot.totalRepeat);
+
+        totalCount_SP.setValueFactory(totalEmailValFac);
+        totalCount_SP.setEditable(true);
+        totalCount_SP.getEditor().setAlignment(Pos.CENTER_RIGHT);
+        totalCount_SP.getEditor().setOnAction(event -> {
+            SpinnerValueFactory.IntegerSpinnerValueFactory valFac = (SpinnerValueFactory.IntegerSpinnerValueFactory) totalCount_SP.getValueFactory();
+            String input = totalCount_SP.getEditor().getText();
+            valFac.setValue(valFac.getConverter().fromString(input));
+        });
+        customizeElement(totalCount_SP, 80, 20, 120, 100);
 
         COUNTER_LB.setFont(DEFAULT_FONT);
         customizeElement(COUNTER_LB, 100, 20, 20, 130);
 
         counter_LB.setFont(DEFAULT_FONT);
         counter_LB.setAlignment(Pos.CENTER_RIGHT);
+        counter_LB.textProperty().bindBidirectional(Bot.counter, new NumberStringConverter());
         customizeElement(counter_LB, 40, 20, 120, 130);
 
-        RECORD_BT.setFont(DEFAULT_FONT);
-        RECORD_BT.setPadding(Insets.EMPTY);
-        customizeElement(RECORD_BT, 180, 20, 20, 390);
+        OVERALL_WAIT_LB.setFont(DEFAULT_FONT);
+        customizeElement(OVERALL_WAIT_LB, 100, 20, 20, 160);
+
+        SpinnerValueFactory<Integer> overallWaitValFac
+                                     = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10000,
+                                                                                          Bot.overallWait.get(), 100);
+        overallWaitValFac.valueProperty().bindBidirectional(Bot.overallWait);
+        overallWait_SP.setValueFactory(overallWaitValFac);
+        overallWait_SP.setEditable(true);
+        overallWait_SP.getEditor().setAlignment(Pos.CENTER_RIGHT);
+        overallWait_SP.getEditor().setOnAction(event -> {
+            String input = totalCount_SP.getEditor().getText();
+            overallWaitValFac.setValue(overallWaitValFac.getConverter().fromString(input));
+        });
+        customizeElement(overallWait_SP, 80, 20, 120, 160);
+
+        MOVE_UP_BT.setFont(DEFAULT_FONT);
+        MOVE_UP_BT.setPadding(Insets.EMPTY);
+        customizeElement(MOVE_UP_BT, 30, 20, 230, 160);
+
+        MOVE_DOWN_BT.setFont(DEFAULT_FONT);
+        MOVE_DOWN_BT.setPadding(Insets.EMPTY);
+        customizeElement(MOVE_DOWN_BT, 30, 20, 270, 160);
+
+        ADD_BT.setFont(DEFAULT_FONT);
+        ADD_BT.setPadding(Insets.EMPTY);
+        customizeElement(ADD_BT, 30, 20, 310, 160);
+
+        DELETE_BT.setFont(DEFAULT_FONT);
+        DELETE_BT.setPadding(Insets.EMPTY);
+        customizeElement(DELETE_BT, 30, 20, 350, 160);
+
+        RESET_BT.setFont(DEFAULT_FONT);
+        RESET_BT.setPadding(Insets.EMPTY);
+        customizeElement(RESET_BT, 180, 20, 20, 420);
 
         GO_BT.setFont(DEFAULT_FONT);
         GO_BT.setPadding(Insets.EMPTY);
-        customizeElement(GO_BT, 180, 20, 200, 390);
-
-        START_RECORD_LB.setFont(DEFAULT_FONT);
-        customizeElement(START_RECORD_LB, 180, 20, 20, 420);
-
-        STOP_RECORD_LB.setFont(DEFAULT_FONT);
-        customizeElement(STOP_RECORD_LB, 180, 20, 20, 450);
-
-        START_OPERATION_LB.setFont(DEFAULT_FONT);
-        customizeElement(START_OPERATION_LB, 180, 20, 200, 420);
+        customizeElement(GO_BT, 180, 20, 200, 420);
 
         STOP_OPERATION_LB.setFont(DEFAULT_FONT);
-        customizeElement(STOP_OPERATION_LB, 180, 20, 200, 450);
+        customizeElement(STOP_OPERATION_LB, 180, 20, 20, 450);
 
         CLIPBOARD_0.setFont(DEFAULT_FONT);
         customizeElement(CLIPBOARD_0, 100, 20, 400, 10);
@@ -171,24 +224,30 @@ public class App extends Application {
         customizeElement(HTMLEditor_2, 220, 120, 400, 330);
 
         mainPane.getChildren().addAll(MOUSE_X_LB,
-                                      MOUSE_Y_LB,
-                                      EMAIL_LB,
-                                      COUNTER_LB,
-                                      TOTAL_COUNT_LB,
-                                      START_RECORD_LB,
-                                      STOP_RECORD_LB,
-                                      START_OPERATION_LB,
-                                      STOP_OPERATION_LB,
-                                      BROWSE_BT,
-                                      RECORD_BT,
-                                      GO_BT,
-                                      srcDir_TF,
-                                      emailSuffix_TF,
                                       mousePosX_LB,
+                                      MOUSE_Y_LB,
                                       mousePosY_LB,
+                                      EMAIL_CB,
+                                      ON_TOP_CB,
+                                      BROWSE_BT,
+                                      srcDir_TF,
+                                      EMAIL_LB,
                                       emailExample_LB,
-                                      totalCount_LB,
+                                      emailSuffix_TF,
+                                      TOTAL_COUNT_LB,
+                                      totalCount_SP,
+                                      COUNTER_LB,
                                       counter_LB,
+                                      OVERALL_WAIT_LB,
+                                      overallWait_SP,
+                                      MOVE_UP_BT,
+                                      MOVE_DOWN_BT,
+                                      ADD_BT,
+                                      DELETE_BT,
+                                      StepTable.getTable(),
+                                      RESET_BT,
+                                      GO_BT,
+                                      STOP_OPERATION_LB,
                                       CLIPBOARD_0,
                                       CLIPBOARD_1,
                                       CLIPBOARD_2,
@@ -199,27 +258,72 @@ public class App extends Application {
     }
 
     public void setButtonAction() {
+        EMAIL_CB.selectedProperty().addListener((ov, oldValue, newValue) -> {
+            srcDir_TF.setDisable(!newValue);
+            BROWSE_BT.setDisable(!newValue);
+            EMAIL_LB.setDisable(!newValue);
+            emailExample_LB.setDisable(!newValue);
+            emailSuffix_TF.setDisable(!newValue);
+            Bot.useEmail = newValue;
+
+            if(newValue) {
+                TOTAL_COUNT_LB.setText("Total email:");
+                totalCount_SP.setValueFactory(totalEmailValFac);
+            }
+            else {
+                TOTAL_COUNT_LB.setText("Total repeat:");
+                totalCount_SP.setValueFactory(totalRepeatValFac);
+            }
+
+        });
+
+        ON_TOP_CB.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+            if(new_val) {
+                mainStage.setAlwaysOnTop(true);
+            }
+            else {
+                mainStage.setAlwaysOnTop(false);
+            }
+        });
+
+        BROWSE_BT.setOnMouseClicked(event -> {
+            Bot.openFileChooser();
+        });
+
+        MOVE_UP_BT.setOnMouseClicked(event -> {
+            StepTable.moveRecordUp();
+        });
+
+        MOVE_DOWN_BT.setOnMouseClicked(event -> {
+            StepTable.moveRecordDown();
+        });
+
+        ADD_BT.setOnMouseClicked(event -> {
+            StepTable.addRecord();
+        });
+
+        DELETE_BT.setOnMouseClicked(event -> {
+            StepTable.removeRecord();
+        });
+
+        RESET_BT.setOnMouseClicked(event -> {
+            Bot.resetAll();
+        });
+
         GO_BT.setOnMouseClicked((MouseEvent mouseEvent) -> {
-
-            final Clipboard clipboard = Clipboard.getSystemClipboard();
-            final ClipboardContent content = new ClipboardContent();
-            HTMLEditor_0.setHtmlText(clipboard.getHtml());
-            Platform.runLater(() -> {
-                for(int i = 0; i < 100; i++) {
-                    Bot.robot.mouseMove(100 * i, 300);
-                    try {
-                        Thread.sleep(1000);
-                    }
-                    catch(InterruptedException ex) {
-                    }
-                }
-            });
-
+            Bot.counter.set(0);
+            Bot.content.putHtml(HTMLEditor_0.getHtmlText());
+            Bot.clipboard.setContent(Bot.content);
+            System.out.println(Bot.clipboard.getHtml());
+//            Platform.runLater(() -> {
+//                App.setDisableInput(true);
+//            });
+//            Bot.go();
         });
 
     }
 
-    public void customizeElement(Region element, int width, int height, int x, int y) {
+    public static void customizeElement(Region element, int width, int height, int x, int y) {
         element.setPrefSize(width, height);
         element.setLayoutX(x);
         element.setLayoutY(y);
@@ -239,6 +343,28 @@ public class App extends Application {
             }
 
         });
+    }
+
+    public static void setDisableInput(boolean trigger) {
+        if(Bot.useEmail) {
+            srcDir_TF.setDisable(trigger);
+            BROWSE_BT.setDisable(trigger);
+            EMAIL_LB.setDisable(trigger);
+            emailExample_LB.setDisable(trigger);
+            emailSuffix_TF.setDisable(trigger);
+        }
+
+        StepTable.tableView.getSelectionModel().clearSelection();
+        totalCount_SP.setDisable(trigger);
+        counter_LB.setDisable(trigger);
+        overallWait_SP.setDisable(trigger);
+        MOVE_UP_BT.setDisable(trigger);
+        MOVE_DOWN_BT.setDisable(trigger);
+        ADD_BT.setDisable(trigger);
+        DELETE_BT.setDisable(trigger);
+        StepTable.tableView.setEditable(!trigger);
+        RESET_BT.setDisable(trigger);
+        GO_BT.setDisable(trigger);
     }
 
     public static void main(String[] args) {
