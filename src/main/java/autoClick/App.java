@@ -33,6 +33,8 @@ public class App extends Application {
     public static final CheckBox EMAIL_CB = new CheckBox("Email");
     public static final CheckBox ON_TOP_CB = new CheckBox("On top");
     public static final Button BROWSE_BT = new Button("Browse");
+    public static final Button SAVE_BT = new Button("Save");
+    public static final Button LOAD_BT = new Button("Load");
     public static final Button MOVE_UP_BT = new Button("\u25B2");
     public static final Button MOVE_DOWN_BT = new Button("\u25BC");
     public static final Button ADD_BT = new Button("+");
@@ -178,6 +180,14 @@ public class App extends Application {
         });
         customizeElement(overallWait_SP, 80, 20, 120, 160);
 
+        SAVE_BT.setFont(DEFAULT_FONT);
+        SAVE_BT.setPadding(Insets.EMPTY);
+        customizeElement(SAVE_BT, 70, 20, 230, 130);
+
+        LOAD_BT.setFont(DEFAULT_FONT);
+        LOAD_BT.setPadding(Insets.EMPTY);
+        customizeElement(LOAD_BT, 70, 20, 310, 130);
+
         MOVE_UP_BT.setFont(DEFAULT_FONT);
         MOVE_UP_BT.setPadding(Insets.EMPTY);
         customizeElement(MOVE_UP_BT, 30, 20, 230, 160);
@@ -240,6 +250,8 @@ public class App extends Application {
                                       counter_LB,
                                       OVERALL_WAIT_LB,
                                       overallWait_SP,
+                                      SAVE_BT,
+                                      LOAD_BT,
                                       MOVE_UP_BT,
                                       MOVE_DOWN_BT,
                                       ADD_BT,
@@ -290,6 +302,14 @@ public class App extends Application {
             Bot.openFileChooser();
         });
 
+        SAVE_BT.setOnMouseClicked(event -> {
+            StepTable.saveStepTable();
+        });
+        
+        LOAD_BT.setOnMouseClicked(event -> {
+            StepTable.loadStepTable();
+        });
+        
         MOVE_UP_BT.setOnMouseClicked(event -> {
             StepTable.moveRecordUp();
         });
@@ -312,13 +332,10 @@ public class App extends Application {
 
         GO_BT.setOnMouseClicked((MouseEvent mouseEvent) -> {
             Bot.counter.set(0);
-            Bot.content.putHtml(HTMLEditor_0.getHtmlText());
-            Bot.clipboard.setContent(Bot.content);
-            System.out.println(Bot.clipboard.getHtml());
-//            Platform.runLater(() -> {
-//                App.setDisableInput(true);
-//            });
-//            Bot.go();
+            Platform.runLater(() -> {
+                App.setDisableInput(true);
+            });
+            Bot.go();
         });
 
     }
@@ -349,15 +366,14 @@ public class App extends Application {
         if(Bot.useEmail) {
             srcDir_TF.setDisable(trigger);
             BROWSE_BT.setDisable(trigger);
-            EMAIL_LB.setDisable(trigger);
-            emailExample_LB.setDisable(trigger);
             emailSuffix_TF.setDisable(trigger);
         }
 
         StepTable.tableView.getSelectionModel().clearSelection();
         totalCount_SP.setDisable(trigger);
-        counter_LB.setDisable(trigger);
         overallWait_SP.setDisable(trigger);
+        SAVE_BT.setDisable(trigger);
+        LOAD_BT.setDisable(trigger);
         MOVE_UP_BT.setDisable(trigger);
         MOVE_DOWN_BT.setDisable(trigger);
         ADD_BT.setDisable(trigger);

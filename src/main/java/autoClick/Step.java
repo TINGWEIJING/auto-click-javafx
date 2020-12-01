@@ -40,7 +40,7 @@ public class Step {
         stepType.set(newType);
         updateDescription();
     }
-    
+
     public String getStepTypeStr() {
         return stepType.toString();
     }
@@ -65,7 +65,11 @@ public class Step {
             case HOLD_KEYS:
             case RELEASE_KEYS:
             case PRESS_KEYS:
-                setDescription("Key: "+keys.stream().map(Object::toString).collect(Collectors.joining(" + ")));
+                setDescription("Key: " + keys.stream().map(Object::toString).collect(Collectors.joining(" + ")));
+                break;
+
+            case ENTER:
+                setDescription("Key: Enter");
                 break;
 
             case PASTE_EMAIL:
@@ -87,7 +91,7 @@ public class Step {
     public void setDescription(String value) {
         description.set(value);
     }
-    
+
     public void setWaitMilisec(int waitMilisec) {
         this.waitMilisec = waitMilisec;
     }
@@ -95,15 +99,15 @@ public class Step {
     public Type getStepType() {
         return stepType.get();
     }
-    
+
     public void setStepType(Type type) {
         stepType.set(type);
     }
-    
+
     public ObjectProperty<Type> stepTypeProperty() {
         return this.stepType;
     }
-    
+
 }
 
 enum Type {
@@ -113,6 +117,7 @@ enum Type {
     HOLD_KEYS("Hold key(s)"),
     RELEASE_KEYS("Release key(s)"),
     PRESS_KEYS("Press key(s)"),
+    ENTER("Enter"),
     PASTE_EMAIL("Paste next email"),
     PASTE_CLIP_0("Paste content 0"),
     PASTE_CLIP_1("Paste content 1"),

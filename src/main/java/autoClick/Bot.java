@@ -1,22 +1,21 @@
 package autoClick;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.*;
 import javafx.application.Platform;
 import javafx.beans.property.*;
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
+import javafx.concurrent.*;
 import javafx.scene.input.*;
 import javafx.scene.robot.Robot;
 import javafx.scene.web.HTMLEditor;
 import javafx.stage.*;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Whitelist;
+//import 
 
 /**
  *
@@ -34,6 +33,7 @@ public class Bot {
 
     public static final FileChooser fileChooser = new FileChooser();
     public static BufferedReader reader;
+    public static BufferedWriter writter;
     public static File emailTextFile;
     public static FileTime emailTextFileTime;
     public static LinkedList<String> emailList = new LinkedList<>();
@@ -48,7 +48,7 @@ public class Bot {
     public static ObjectProperty<Integer> totalEmail = new SimpleObjectProperty<>(0);
     public static ObjectProperty<Integer> totalRepeat = new SimpleObjectProperty<>(0);
     public static SimpleIntegerProperty counter = new SimpleIntegerProperty(0);
-    public static ObjectProperty<Integer> overallWait = new SimpleObjectProperty<>(100);
+    public static ObjectProperty<Integer> overallWait = new SimpleObjectProperty<>(500);
 
     public static void startBotThread() {
 
@@ -61,7 +61,7 @@ public class Bot {
                                                                        0, UPDATE_RATE,
                                                                        TimeUnit.MICROSECONDS);
         App.mainPane.setOnKeyPressed(event -> {
-            if(event.getCode().equals(KeyCode.PAUSE)) {
+            if(event.getCode().equals(KeyCode.PAUSE) && botService.isRunning()) {
                 System.out.println("PAUSE!");
                 botService.cancel();
                 Platform.runLater(() -> {
@@ -72,8 +72,8 @@ public class Bot {
         );
 
         App.mainStage.focusedProperty().addListener((ov, oldValue, newValue) -> {
+
             if(newValue) {
-                System.out.println("Focus!");
                 if(emailTextFile != null && emailTextFileTime != null) {
                     try {
                         FileTime tempTime = Files.getLastModifiedTime(emailTextFile.toPath());
@@ -90,6 +90,28 @@ public class Bot {
 
     }
 
+    static void checkClipboard() {
+        if(clipboard.hasFiles()) {
+            System.out.println("Files: " + clipboard.getFiles().toString());
+        }
+        if(clipboard.hasImage()) {
+            System.out.println("Image: " + clipboard.getImage().toString());
+        }
+        if(clipboard.hasRtf()) {
+            System.out.println("Rtf: " + clipboard.getRtf());
+        }
+        if(clipboard.hasUrl()) {
+            System.out.println("URL: " + clipboard.getUrl());
+        }
+        if(clipboard.hasHtml()) {
+            System.out.println("HTML: " + clipboard.getHtml());
+        }
+        if(clipboard.hasString()) {
+            System.out.println("String: " + clipboard.getString());
+        }
+
+    }
+
     public static void configureFileChooser() {
         fileChooser.setInitialDirectory(new File("C:\\"));
         fileChooser.setTitle("Choose Email Text File");
@@ -99,10 +121,12 @@ public class Bot {
     }
 
     public static void openFileChooser() {
+        App.setDisableInput(true);
         emailTextFile = fileChooser.showOpenDialog(App.mainStage);
         if(emailTextFile != null) {
             loadFile();
         }
+        App.setDisableInput(false);
     }
 
     static void loadFile() {
@@ -135,50 +159,73 @@ public class Bot {
         try {
             switch(step.stepType.get()) {
                 case MOVE:
-                    robot.mouseMove(step.mouseX, step.mouseY);
+                    Platform.runLater(() -> {
+                        robot.mouseMove(step.mouseX, step.mouseY);
+                    });
                     break;
 
                 case LEFT_CLICK:
-                    robot.mouseClick(MouseButton.PRIMARY);
+                    Platform.runLater(() -> {
+                        robot.mouseClick(MouseButton.PRIMARY);
+                    });
                     break;
 
                 case MOVE_LEFT_CLICK:
-                    robot.mouseMove(step.mouseX, step.mouseY);
-                    robot.mouseClick(MouseButton.PRIMARY);
+                    Platform.runLater(() -> {
+                        robot.mouseMove(step.mouseX, step.mouseY);
+                        robot.mouseClick(MouseButton.PRIMARY);
+                    });
                     break;
 
                 case HOLD_KEYS:
-                    for(KeyCode key : step.keys) {
-                        robot.keyPress(key);
-                    }
+                    Platform.runLater(() -> {
+                        for(KeyCode key : step.keys) {
+                            robot.keyPress(key);
+                        }
+                    });
                     break;
 
                 case RELEASE_KEYS:
-                    for(KeyCode key : step.keys) {
-                        robot.keyRelease(key);
-                    }
+                    Platform.runLater(() -> {
+                        for(KeyCode key : step.keys) {
+                            robot.keyRelease(key);
+                        }
+                    });
                     break;
 
                 case PRESS_KEYS:
-                    for(KeyCode key : step.keys) {
-                        robot.keyPress(key);
-                    }
-                    for(KeyCode key : step.keys) {
-                        robot.keyRelease(key);
-                    }
+                    Platform.runLater(() -> {
+                        for(KeyCode key : step.keys) {
+                            robot.keyPress(key);
+                        }
+                        for(KeyCode key : step.keys) {
+                            robot.keyRelease(key);
+                        }
+                    });
+                    break;
+
+                case ENTER:
+                    Platform.runLater(() -> {
+                        robot.keyType(KeyCode.ENTER);
+                    });
                     break;
 
                 case PASTE_EMAIL:
                     if(useEmail && emailListItr.hasNext()) {
-                        String email = emailListItr.next();
-                        App.emailExample_LB.setText(email);
-                        email += "@" + App.emailSuffix_TF.getText();
-                        System.out.println(email);
-                        content.putString(email);
-                        robot.keyPress(KeyCode.CONTROL);
-                        robot.keyPress(KeyCode.V);
-                        robot.keyRelease(KeyCode.CONTROL);
-                        robot.keyRelease(KeyCode.V);
+                        Platform.runLater(() -> {
+                            String email = emailListItr.next();
+                            App.emailExample_LB.setText(email + "@");
+                            email += "@" + App.emailSuffix_TF.getText();
+                            content.clear();
+                            content.putString(email);
+                            clipboard.setContent(content);
+                        });
+                        Platform.runLater(() -> {
+                            robot.keyPress(KeyCode.CONTROL);
+                            robot.keyPress(KeyCode.V);
+                            robot.keyRelease(KeyCode.CONTROL);
+                            robot.keyRelease(KeyCode.V);
+                        });
                     }
                     break;
 
@@ -196,16 +243,15 @@ public class Bot {
             }
         }
         catch(Exception e) {
-            e.printStackTrace();
+            System.out.println("STOP ACTION!");
             botService.cancel();
         }
-        System.out.println("Performed! " + step.getStepTypeStr());
     }
 
     public static void resetAll() {
         StepTable.tableView.getItems().clear();
         counter.set(0);
-        overallWait.set(100);
+        overallWait.set(500);
         loadFile();
     }
 
@@ -223,50 +269,40 @@ public class Bot {
     }
 
     static void pasteClipAction(HTMLEditor htmlEditor) {
-        double definedPosX = App.mainStage.getX();
-        double definedPosY = App.mainStage.getY();
-        double oriMouseX = robot.getMouseX();
-        double oriMouseY = robot.getMouseY();
-        if(htmlEditor.equals(App.HTMLEditor_0)) {
-            definedPosX += 490;
-            definedPosY += 50;
+        Platform.runLater(() -> {
+            content.clear();
+            content.putHtml(htmlEditor.getHtmlText());
+            content.putString(stripHTMLTags(htmlEditor.getHtmlText()));
+            clipboard.setContent(content);
+        });
+        Platform.runLater(() -> {
+            robot.keyPress(KeyCode.CONTROL);
+            robot.keyPress(KeyCode.V);
+            robot.keyRelease(KeyCode.CONTROL);
+            robot.keyRelease(KeyCode.V);
+        });
+    }
+
+    private static String stripHTMLTags(String html) {
+        if(html == null) {
+            return html;
         }
-        else if(htmlEditor.equals(App.HTMLEditor_1)) {
-            definedPosX += 490;
-            definedPosY += 200;
-        }
-        else if(htmlEditor.equals(App.HTMLEditor_2)) {
-            definedPosX += 490;
-            definedPosY += 350;
-        }
-        robot.mouseMove(definedPosX, definedPosY);
-        robot.mouseClick(MouseButton.PRIMARY);
-        robot.keyPress(KeyCode.CONTROL);
-        robot.keyPress(KeyCode.A);
-        robot.keyRelease(KeyCode.CONTROL);
-        robot.keyRelease(KeyCode.A);
-        robot.keyPress(KeyCode.CONTROL);
-        robot.keyPress(KeyCode.C);
-        robot.keyRelease(KeyCode.CONTROL);
-        robot.keyRelease(KeyCode.C);
-            System.out.println("Clip: " + clipboard.getString());
-        robot.mouseMove(oriMouseX, oriMouseY);
-        robot.mouseClick(MouseButton.PRIMARY);
-        robot.keyPress(KeyCode.CONTROL);
-        robot.keyPress(KeyCode.V);
-        robot.keyRelease(KeyCode.CONTROL);
-        robot.keyRelease(KeyCode.V);
-//        content.putHtml(htmlEditor.getHtmlText());
-//        clipboard.setContent(content);
-//        robot.keyPress(KeyCode.CONTROL);
-//        robot.keyPress(KeyCode.V);
-//        robot.keyRelease(KeyCode.CONTROL);
-//        robot.keyRelease(KeyCode.V);
+        Document jsoupDoc = Jsoup.parse(html);
+        Document.OutputSettings outputSettings = new Document.OutputSettings();
+        outputSettings.prettyPrint(false);
+        jsoupDoc.outputSettings(outputSettings);
+        jsoupDoc.select("br").before("\\n");
+        jsoupDoc.select("p").before("\\n");
+        String str = jsoupDoc.html().replaceAll("\\\\n", "\n");
+        String strWithNewLines
+               = Jsoup.clean(str, "", Whitelist.none(), outputSettings);
+        return strWithNewLines;
     }
 
     public static void destroy() {
         scheduledFuture.cancel(true);
         scheduledExecutorService.shutdownNow();
+        botService.cancel();
     }
 
 }
@@ -306,9 +342,8 @@ class BotService extends Service<Void> {
                             Platform.runLater(() -> {
                                 StepTable.tableView.getSelectionModel().clearSelection();
                                 StepTable.tableView.getSelectionModel().select(item);
-                                Bot.performStepAction(step);
-//                            App.mainPane.requestFocus();
                             });
+                            Bot.performStepAction(step);
                             Thread.sleep(step.waitMilisec);
                         }
 
@@ -335,7 +370,7 @@ class BotService extends Service<Void> {
                     });
                 }
                 catch(Exception e) {
-                    e.printStackTrace();
+                    System.out.println("STOP!");
                     cancel();
                 }
                 return null;

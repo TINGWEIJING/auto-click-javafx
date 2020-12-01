@@ -39,3 +39,4 @@ A trial project
 22. [How to use JavaFX Service](https://riptutorial.com/javafx/example/23625/how-to-use-javafx-service)
 23. [Spinner<Integer> bind to IntegerProperty](https://stackoverflow.com/questions/35835939/spinnerinteger-bind-to-integerproperty)
 24. [How to get file size in Java](https://mkyong.com/java/how-to-get-file-size-in-java/)
+25. [Preserving Line Breaks When Using Jsoup](https://www.baeldung.com/jsoup-line-breaks)
