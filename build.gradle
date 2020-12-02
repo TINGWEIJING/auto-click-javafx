@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'edu.sc.seis.launch4j' version '2.4.9'
 }
 
 repositories {
@@ -17,6 +18,11 @@ dependencies {
 javafx {
     version = "15.0.1"
     modules = [ 'javafx.controls', 'javafx.web' ]
+}
+
+launch4j {
+  mainClassName = 'autoClick.App'
+  icon = ""
 }
 
 application {

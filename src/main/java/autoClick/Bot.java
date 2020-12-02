@@ -73,7 +73,7 @@ public class Bot {
 
         App.mainStage.focusedProperty().addListener((ov, oldValue, newValue) -> {
 
-            if(newValue) {
+            if(newValue && !botService.isRunning()) {
                 if(emailTextFile != null && emailTextFileTime != null) {
                     try {
                         FileTime tempTime = Files.getLastModifiedTime(emailTextFile.toPath());
