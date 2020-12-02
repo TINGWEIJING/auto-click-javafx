@@ -65,6 +65,7 @@ public class Bot {
                 System.out.println("PAUSE!");
                 botService.cancel();
                 Platform.runLater(() -> {
+                    App.minimize(false);
                     App.setDisableInput(false);
                 });
             }
@@ -366,6 +367,7 @@ class BotService extends Service<Void> {
 
                     }
                     Platform.runLater(() -> {
+                        App.minimize(false);
                         App.setDisableInput(false);
                     });
                 }

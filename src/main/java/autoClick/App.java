@@ -2,7 +2,8 @@ package autoClick;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.Property;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.*;
 import javafx.scene.*;
@@ -32,6 +33,7 @@ public class App extends Application {
 
     public static final CheckBox EMAIL_CB = new CheckBox("Email");
     public static final CheckBox ON_TOP_CB = new CheckBox("On top");
+    public static final CheckBox MINI_CB = new CheckBox("Mini");
     public static final Button BROWSE_BT = new Button("Browse");
     public static final Button SAVE_BT = new Button("Save");
     public static final Button LOAD_BT = new Button("Load");
@@ -43,6 +45,7 @@ public class App extends Application {
     public static final Button GO_BT = new Button("GO");
 
     public static final Font DEFAULT_FONT = Font.font("Segoe UI", 14);
+    public static final BooleanProperty minimizable = new SimpleBooleanProperty(true);
 
     public static Label mousePosX_LB = new Label("0");
     public static Label mousePosY_LB = new Label("0");
@@ -112,12 +115,17 @@ public class App extends Application {
         EMAIL_CB.setFont(DEFAULT_FONT);
         EMAIL_CB.setAllowIndeterminate(false);
         EMAIL_CB.setSelected(true);
-        customizeElement(EMAIL_CB, 80, 20, 220, 10);
+        customizeElement(EMAIL_CB, 60, 20, 170, 10);
 
         ON_TOP_CB.setFont(DEFAULT_FONT);
         ON_TOP_CB.setAllowIndeterminate(false);
         ON_TOP_CB.setSelected(true);
-        customizeElement(ON_TOP_CB, 80, 20, 300, 10);
+        customizeElement(ON_TOP_CB, 70, 20, 240, 10);
+
+        MINI_CB.setFont(DEFAULT_FONT);
+        MINI_CB.setAllowIndeterminate(false);
+        MINI_CB.setSelected(true);
+        customizeElement(MINI_CB, 60, 20, 320, 10);
 
         srcDir_TF.setFont(DEFAULT_FONT);
         srcDir_TF.setPadding(Insets.EMPTY);
@@ -239,6 +247,7 @@ public class App extends Application {
                                       mousePosY_LB,
                                       EMAIL_CB,
                                       ON_TOP_CB,
+                                      MINI_CB,
                                       BROWSE_BT,
                                       srcDir_TF,
                                       EMAIL_LB,
@@ -298,6 +307,8 @@ public class App extends Application {
             }
         });
 
+        MINI_CB.selectedProperty().bindBidirectional(minimizable);
+        
         BROWSE_BT.setOnMouseClicked(event -> {
             Bot.openFileChooser();
         });
@@ -305,11 +316,11 @@ public class App extends Application {
         SAVE_BT.setOnMouseClicked(event -> {
             StepTable.saveStepTable();
         });
-        
+
         LOAD_BT.setOnMouseClicked(event -> {
             StepTable.loadStepTable();
         });
-        
+
         MOVE_UP_BT.setOnMouseClicked(event -> {
             StepTable.moveRecordUp();
         });
@@ -331,6 +342,7 @@ public class App extends Application {
         });
 
         GO_BT.setOnMouseClicked((MouseEvent mouseEvent) -> {
+            minimize(true);
             Bot.counter.set(0);
             Platform.runLater(() -> {
                 App.setDisableInput(true);
@@ -369,6 +381,9 @@ public class App extends Application {
             emailSuffix_TF.setDisable(trigger);
         }
 
+        EMAIL_CB.setDisable(trigger);
+        ON_TOP_CB.setDisable(trigger);
+        MINI_CB.setDisable(trigger);
         StepTable.tableView.getSelectionModel().clearSelection();
         totalCount_SP.setDisable(trigger);
         overallWait_SP.setDisable(trigger);
@@ -381,6 +396,29 @@ public class App extends Application {
         StepTable.tableView.setEditable(!trigger);
         RESET_BT.setDisable(trigger);
         GO_BT.setDisable(trigger);
+    }
+
+    public static void minimize(boolean trigger) {
+        if(!minimizable.get()) {
+            return;
+        }
+        for(Node node : mainPane.getChildren()) {
+            node.setVisible(!trigger);
+        }
+        StepTable.tableView.setVisible(true);
+        STOP_OPERATION_LB.setVisible(true);
+        if(trigger) {
+            mainStage.setWidth(380);
+            mainStage.setHeight(270);
+            customizeElement(StepTable.tableView, 360, 220, 10, 10);
+            customizeElement(STOP_OPERATION_LB, 180, 20, 10, 240);
+        }
+        else {
+            mainStage.setWidth(640);
+            mainStage.setHeight(480);
+            customizeElement(StepTable.tableView, 360, 220, 20, 190);
+            customizeElement(STOP_OPERATION_LB, 180, 20, 20, 450);
+        }
     }
 
     public static void main(String[] args) {
